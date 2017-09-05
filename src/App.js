@@ -9,6 +9,7 @@ class App extends Component {
     this.state = {
       currentItem: '',
       username: '',
+      items: [],
     }
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -34,9 +35,32 @@ class App extends Component {
     });
   }
 
+  componentDidMount() {
+    const itemsRef = firebase.database().ref('items');
+    itemsRef.on('value', (snapshot) => {
+      let items = snapshot.val()
+      let newState = []
+      for (let item in items) {
+        newState.push({
+          id: item,
+          title: items[item].title,
+          user: items[item].user
+        })
+      }
+      this.setState({
+        items: newState
+      });
+    });
+  }
+
+  removeItem(id_item) {
+    const itemsRef = firebase.database().ref(`/items/${id_item}`)
+    itemsRef.remove();
+  }
+
   render() {
     return (
-      <div className='app'>
+      <div className='app' style={{ margin: 50, padding: 20 }}>
         <header>
             <div className='wrapper'>
               <h1>Fun Food Friends</h1>
@@ -65,6 +89,17 @@ class App extends Component {
           <section className='display-item'>
             <div className='wrapper'>
               <ul>
+                {this.state.items.map((item) => {
+                  return (
+                    <li key={item.id}>
+                      <h3>{item.title}</h3>
+                      <p>Brought by: {item.user}</p>
+                      <button
+                        style={{ backgroundColor: '#ff1200', color: '#fff', borderRadius: 30 }}
+                        onClick={() => this.removeItem(item.id) }>X</button>
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           </section>
